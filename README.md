@@ -1,4 +1,4 @@
-# ElasticSearch5.1.1 + Flume1.7 + Kibana5.1.1收集日志部署方案
+# ElasticSearch5.1.1 + Flume1.7 + Kibana5.1.1收集日志
 
 ## 环境准备
 - JDK8的安装
@@ -108,9 +108,96 @@
 
  - Kibana的安装
    - 软件安装
+  
+ - curator + linux 定时任务
+   - 软件安装
+   ```
+     sudo pip install elasticsearch-curator
+     
+   ```
+   - 配置文件
+   ```
+    config.yml
+    
+    ---
+    # Remember, leave a key empty if there is no value.  None will be a string,
+    # not a Python "NoneType"
+    client:
+      hosts:
+        - elasticsearch_ip
+      port: 9200
+      url_prefix:
+      use_ssl: False
+      certificate:
+      client_cert:
+      client_key:
+      aws_key:
+      aws_secret_key:
+      aws_region:
+      ssl_no_validate: False
+      http_auth:
+      timeout: 30
+      master_only: False
+
+    logging:
+      loglevel: INFO
+      logfile:
+      logformat: default
+      blacklist: ['elasticsearch', 'urllib3']
+      
+      
+   ----------------------------------------------------------
+   
+   action.yml
+   
+
+       ---
+    # Remember, leave a key empty if there is no value.  None will be a string,
+    # not a Python "NoneType"
+    #
+    # Also remember that all examples have 'disable_action' set to True.  If you
+    # want to use this action as a template, be sure to set this to False after
+    # copying it.
+    actions:
+      1:
+        action: delete_indices
+        description: >-
+          Delete indices older than 45 days (based on index name), for logstash-
+          prefixed indices. Ignore the error if the filter does not result in an
+          actionable list of indices (ignore_empty_list) and exit cleanly.
+        options:
+          ignore_empty_list: True
+          timeout_override:
+          continue_if_exception: False
+          disable_action: True
+        filters:
+        - filtertype: pattern
+          kind: prefix
+          value: logstash-
+          exclude:
+        - filtertype: age
+          source: name
+          direction: older
+          timestring: '%Y.%m.%d'
+          unit: days
+          unit_count: 45
+          exclude:
+
+   ```
+   - 启动命令
+   ```
+   curator --config config.yml  action.yml
+   ```
+   - Linux 定时任务
+   ```
+    #!/bin/sh
+    /usr/local/bin/curator --config config.yml action.yml
+    echo "action (close,open delete) success"
+   ```
 
 
  - 参考资料
 ```
 http://blog.csdn.net/luqiang81191293/article/details/47255119
+https://github.com/elastic/curator
 ```
