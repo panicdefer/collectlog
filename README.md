@@ -80,12 +80,37 @@
      cp cn/lib/*  $flume_home/lib/
      cp conf/*  $flume_home/conf/
      ```
-   - Flume收集Nginx的日志，Business的日志
+   - 修改配置文件
+     ```
+     1.修改flume.conf的 elasticsearch的地址
+     2.修改flume.conf的 Aws s3 的存储bucket的名字
+     3.修改flume.conf中 Aws s3连接 key and secrety
+     4.修改flume.conf中 需要收集的相关的业务字段或者Nginx字段
+     ```
+   - Flume收集Nginx的日志，Business的日志(flume的配置项根据自己的业务修改)
    		- Nginx 日志格式
    		```
         '{"app_name":"$app_name","trace_id":"$request_id","remote_addr":"$remote_addr","http_x_forwarded_for":"$http_x_forwarded_for","remote_user":"$remote_user","request":"$request","request_body":"$request_body","request_url":"$request_uri","status":"$status","body_bytes_sent":"$body_bytes_sent","bytes_sent":"$bytes_sent","connection":"$connection","connection_requests":"$connection_requests","msec":"$msec","pipe":"$pipe","http_referer":"$http_referer","http_user_agent":"$http_user_agent","request_length":"$request_length","request_time":"$request_time","upstream_response_time":"$upstream_response_time","time_local":"$time_local","gzip_ratio":"$gzip_ratio"}';
         ```
-   
-     
-   
- 
+        - Nginx新增配置项
+        ```
+         #区分不的Nginx的日志
+         set $app_name "api_nginx"
+         #设置trace_id
+         proxy_set_header X-Trace-Id $request_id
+        ```
+        
+  - Flume的启动
+```
+1. bin/flume-ng agent -c conf -f conf/flume_nginx.conf -n nginx -Dflume.root.logger=DEBUG,console
+2. bin/flume-ng agent -c conf -f conf/flume_business.conf -n business -Dflume.root.logger=DEBUG,console
+```
+
+ - Kibana的安装
+   - 软件安装
+
+
+ - 参考资料
+```
+http://blog.csdn.net/luqiang81191293/article/details/47255119
+```
